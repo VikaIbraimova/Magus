@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -85,21 +87,22 @@ public class Utils {
     }
 
     public List<String> getImportedFilesList() {
-        List<String> files = new ArrayList<String>();
-
-        File importDir = new File(importDirectory);
-        String[] filenames = importDir.list();
-        System.out.println(importDir.getAbsolutePath());
-        for (String filename : filenames) {
-            files.add(importDirectory + File.separator + filename);
+        List<String> filesStringsList = new ArrayList<>();
+        try {
+            Files.newDirectoryStream(Paths.get(importDirectory)).forEach(path -> {
+                if (path.toFile().isFile()) {
+                    filesStringsList.add(path.toString());
+                }
+            });
+        } catch (IOException e) {
+            log.error("не удается открыть файл",e);
         }
-
-        return files;
+        return filesStringsList;
     }
 
     public String getOutputFile() {
-        File importDir = new File(outputFile);
-        return importDir.getPath();
+        File file = Paths.get(outputFile).toFile();
+        return file.toString();
     }
 
     public XSSFWorkbook getWorkBookFromFile(String filepath) {
@@ -116,6 +119,7 @@ public class Utils {
 
     public void saveWorkbook(Workbook workbook, String file) {
         try (FileOutputStream outputStream = new FileOutputStream(file)) {
+            log.trace("сохраняем файл: {}", file);
             workbook.write(outputStream);
         } catch (IOException e) {
             log.error("не удаётся сохранить книгу {}", file);
@@ -139,7 +143,7 @@ public class Utils {
                 return (isCellEqual(a, b, a.getCellTypeEnum()));
             }
         }
-        throw new RuntimeException("cell is null");
+        return false;
     }
 
     /*

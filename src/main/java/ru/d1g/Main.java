@@ -95,10 +95,8 @@ public class Main {
                     }
                 }
             }
-            log.trace("сохраняем import книгу");
             utils.saveWorkbook(importWorkbook, filePathString);
+            utils.saveWorkbook(outputWorkbook, outputFile);
         }
-        log.trace("сохраняем output книгу");
-        utils.saveWorkbook(outputWorkbook, outputFile);
     }
 }
