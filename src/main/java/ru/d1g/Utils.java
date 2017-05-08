@@ -134,19 +134,36 @@ public class Utils {
     public boolean compareCells(Cell a, Cell b) {
         if (a != null && b != null) {
             if (a.getCellTypeEnum() == b.getCellTypeEnum()) {
-                return (a.getStringCellValue().equals(b.getStringCellValue()));
+                return (isCellEqual(a,b,a.getCellTypeEnum()));
             }
         }
         throw new RuntimeException("cell is null");
     }
 
-    private boolean compareCellsTypeBased(Cell a, Cell b, CellType cellType) {
+    /*
+    * проверка равности ячеек, требуется указать тип ячеек.
+    * */
+    private boolean isCellEqual(Cell a, Cell b, CellType cellType) {
         boolean result = false;
         switch (cellType) {
             case NUMERIC:
-                result = a == b;
+                result = a.getNumericCellValue() == b.getNumericCellValue();
                 break;
-                case
+            case BOOLEAN:
+                result = a.getBooleanCellValue() == b.getBooleanCellValue();
+                break;
+            case STRING:
+                result = a.getRichStringCellValue().getString().equals(b.getRichStringCellValue().getString());
+                break;
+            case FORMULA:
+                result = a.getCellFormula().equals(b.getCellFormula());
+                break;
+            case ERROR:
+                result = a.getErrorCellValue() == b.getErrorCellValue();
+                break;
+            case BLANK:
+                result = a.getStringCellValue().equals(b.getStringCellValue());
+                break;
         }
         return result;
     }
