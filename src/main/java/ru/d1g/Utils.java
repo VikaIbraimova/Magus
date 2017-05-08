@@ -134,7 +134,7 @@ public class Utils {
     public boolean compareCells(Cell a, Cell b) {
         if (a != null && b != null) {
             if (a.getCellTypeEnum() == b.getCellTypeEnum()) {
-                return (isCellEqual(a,b,a.getCellTypeEnum()));
+                return (isCellEqual(a, b, a.getCellTypeEnum()));
             }
         }
         throw new RuntimeException("cell is null");
@@ -171,5 +171,28 @@ public class Utils {
     /*
     * копирование ячеек
     * */
-
+    public void copyCell(Cell fromCell, Cell toCell) {
+        if (fromCell != null && toCell != null) {
+            switch (fromCell.getCellTypeEnum()) {
+                case NUMERIC:
+                    toCell.setCellValue(fromCell.getNumericCellValue());
+                    break;
+                case FORMULA:
+                    toCell.setCellFormula(fromCell.getCellFormula());
+                    break;
+                case STRING:
+                    toCell.setCellValue(fromCell.getStringCellValue());
+                    break;
+                case BOOLEAN:
+                    toCell.setCellValue(fromCell.getBooleanCellValue());
+                    break;
+                case ERROR:
+                    toCell.setCellValue(fromCell.getErrorCellValue());
+                    break;
+                case BLANK:
+                    toCell.setCellValue("");
+                    break;
+            }
+        }
+    }
 }

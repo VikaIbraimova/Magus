@@ -81,7 +81,7 @@ public class Main {
                                     outputRow.createCell(outputFileHeadersMap.get(header));
                                     outputCell = outputRow.getCell(outputFileHeadersMap.get(header));
                                 }
-                                outputCell.setCellValue(String.valueOf(importRow.getCell(columnNumber))); // задаем ячейке выходного файла значение из ячейки входного файла
+                                utils.copyCell(importRow.getCell(columnNumber),outputCell);
                         });
                         rowFound = true; // меняем состояние: найдено соответствие строк
                     }
