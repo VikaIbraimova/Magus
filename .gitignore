@@ -45,7 +45,6 @@ buildNumber.properties
 .idea/dictionaries
 
 # Sensitive or high-churn files:
-*.iml
 .idea/**/dataSources/
 .idea/**/dataSources.ids
 .idea/**/dataSources.xml

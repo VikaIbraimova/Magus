@@ -54,9 +54,11 @@ public class Utils {
         Map<String, Integer> map = new HashMap<>();
 
         row.cellIterator().forEachRemaining(cell -> {
-            String cellStringValue = cell.getStringCellValue();
-            if (!cellStringValue.equals("")) {
-                map.put(cellStringValue, cell.getColumnIndex());
+            if (cell != null && cell.getCellTypeEnum() == CellType.STRING) {
+                String cellStringValue = cell.getStringCellValue();
+                if (!cellStringValue.equals("")) {
+                    map.put(cellStringValue, cell.getColumnIndex());
+                }
             }
         });
         return map;
@@ -70,7 +72,7 @@ public class Utils {
         for (Iterator<Row> it = sheet.rowIterator(); it.hasNext(); ) {
             Row row = it.next();
             Cell zeroCell = row.getCell(0);
-            if (zeroCell != null) {
+            if (zeroCell != null && zeroCell.getCellTypeEnum() == CellType.STRING) {
                 if (zeroCell.getStringCellValue().equals(tag)) {
                     startingRow = row.getRowNum();
                     break;
