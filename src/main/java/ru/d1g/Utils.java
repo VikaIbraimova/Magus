@@ -79,7 +79,7 @@ public class Utils {
                     startingRow = row.getRowNum();
                     break;
                 } else {
-//                    throw new RuntimeException("can't find starting row");
+                    throw new RuntimeException("can't find starting row");
                 }
             }
         }
