@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import ru.d1g.exceptions.ParseException;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -79,7 +80,7 @@ public class Utils {
                     startingRow = row.getRowNum();
                     break;
                 } else {
-                    throw new RuntimeException("can't find starting row");
+                    throw new ParseException("can't find starting row");
                 }
             }
         }
@@ -96,6 +97,7 @@ public class Utils {
             });
         } catch (IOException e) {
             log.error("не удается открыть файл",e);
+            throw new ParseException("can't open file\n",e);
         }
         return filesStringsList;
     }
@@ -111,10 +113,11 @@ public class Utils {
             return new XSSFWorkbook(is);
         } catch (FileNotFoundException e) {
             log.error("file not found: {}", filepath);
+            throw new ParseException("file not found: "+filepath+"\n",e);
         } catch (IOException e) {
             log.error("IOException for: {}", filepath);
+            throw new ParseException("unexpected IO error while reading file "+filepath+"\n",e);
         }
-        return null;
     }
 
     public void saveWorkbook(Workbook workbook, String file) {
@@ -123,6 +126,7 @@ public class Utils {
             workbook.write(outputStream);
         } catch (IOException e) {
             log.error("не удаётся сохранить книгу {}", file);
+            throw new ParseException("can't save book\n",e);
         }
     }
 
