@@ -47,10 +47,13 @@ public class Parser {
             Sheet importFileSheet;
             for (Iterator<Sheet> sheetIterator = importWorkbook.sheetIterator(); sheetIterator.hasNext(); ) { // для каждого листа
                 importFileSheet = sheetIterator.next();
-
+                Integer importStartingRow = utils.getStartingRow(importFileSheet, "start"); // номер строки с которой начинаем сравнение (помечен словом start)
+                if (importStartingRow < 0) {
+                    continue;
+                }// если нет столбца со start -> следующая итерация
                 Row headersRow = importFileSheet.getRow(0); // берем первую строку (должна быть с заголовками)
                 Map<String, Integer> inputFileHeadersMap = utils.getAllRowHeaders(headersRow); // получаем номера стобцов со всеми заголовками входного файла
-                Integer importStartingRow = utils.getStartingRow(importFileSheet, "start"); // номер строки с которой начинаем сравнение (помечен словом start)
+
                 coloredCellStyle = importWorkbook.createCellStyle();
                 coloredCellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
                 coloredCellStyle.setFillForegroundColor(IndexedColors.CORAL.getIndex());
@@ -66,20 +69,30 @@ public class Parser {
                 }
                 boolean rowFound = false; // состояние, по которому будем определять, что строка не была найдена
 
-                for (int importRowNum = importStartingRow; importRowNum < importFileSheet.getPhysicalNumberOfRows(); importRowNum++) { // для каждой строки import файла
-                    Row importRow = importFileSheet.getRow(importRowNum);
-                    if (importRow==null) continue;
+                for (Iterator<Row> importRowIterator = importFileSheet.rowIterator(); importRowIterator.hasNext(); ) {
+                    Row importRow = importRowIterator.next();
+                    while (importRow.getRowNum() < importStartingRow) { // прогоняем итератор до start строки
+                        importRow = importRowIterator.next();
+                    }
+
                     rowFound = false; // обнуляем состояние
-                    for (int outputRowNum = outputStartingRow; outputRowNum < outputFileSheet.getPhysicalNumberOfRows(); outputRowNum++) { // для каждой строки out файла
-                        Row outputRow = outputFileSheet.getRow(outputRowNum);
-                        if (outputRow==null) continue;
+                    for (Iterator<Row> outputRowIterator = outputFileSheet.rowIterator(); outputRowIterator.hasNext(); ) {
+                        Row outputRow = outputRowIterator.next();
+                        while (outputRow.getRowNum() < outputStartingRow) { // прогоняем итератор до start строки
+                            outputRow = outputRowIterator.next();
+                        }
 
                         int equalCounter = 0;  // заводим счётчик совпавших заголовков
                         for (String header : headers // сравниваем значения нужных заголовков
                                 ) {
 
                             Cell outputCell = outputRow.getCell(outputFileHeadersMap.get(header));
-                            Cell importCell = importRow.getCell(inputFileHeadersMap.get(header));
+                            Cell importCell = null;
+                            try {
+                                importCell = importRow.getCell(inputFileHeadersMap.get(header));
+                            } catch (NullPointerException e) {
+                                System.out.println(e);
+                            }
 
                             if (utils.compareCells(outputCell, importCell)) {
                                 equalCounter++; // нашли совпадение по колонке, следовательно инкрементируем счетчик
@@ -88,13 +101,15 @@ public class Parser {
 
                         if (equalCounter == headers.size()) { // если счетчик совпадений равен кол-ву сравниваемых заголовков -> значит мы нашли совпадение строк
                             log.trace("найдено совпадение строк в файлах import: {} output: {}. заполняем данными", importRow.getRowNum(), outputRow.getRowNum());
+                            Row finalImportRow = importRow;
+                            Row finalOutputRow = outputRow;
                             inputFileHeadersMap.forEach((header, columnNumber) -> { // вот такую жуть ещё делаем :D для каждого заголовка:
-                                Cell outputCell = outputRow.getCell(outputFileHeadersMap.get(header)); // берем ячейку выходного файла для заголовка
+                                Cell outputCell = finalOutputRow.getCell(outputFileHeadersMap.get(header)); // берем ячейку выходного файла для заголовка
                                 if (outputCell == null) { // проверяем, если в выходном файле ячейка отсутствует, то создаём её
-                                    outputRow.createCell(outputFileHeadersMap.get(header));
-                                    outputCell = outputRow.getCell(outputFileHeadersMap.get(header));
+                                    finalOutputRow.createCell(outputFileHeadersMap.get(header));
+                                    outputCell = finalOutputRow.getCell(outputFileHeadersMap.get(header));
                                 }
-                                utils.copyCell(importRow.getCell(columnNumber), outputCell);
+                                utils.copyCell(finalImportRow.getCell(columnNumber), outputCell);
                             });
                             rowFound = true; // меняем состояние: найдено соответствие строк
                         }

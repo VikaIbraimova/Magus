@@ -71,7 +71,7 @@ public class Utils {
     *  Ищем начальную строку для обработки
     * */
     public Integer getStartingRow(Sheet sheet, String tag) {
-        Integer startingRow = 0;
+        Integer startingRow = -1;
         for (Iterator<Row> it = sheet.rowIterator(); it.hasNext(); ) {
             Row row = it.next();
             Cell zeroCell = row.getCell(0);
@@ -79,8 +79,6 @@ public class Utils {
                 if (zeroCell.getStringCellValue().equals(tag)) {
                     startingRow = row.getRowNum();
                     break;
-                } else {
-                    throw new ParseException("can't find starting row");
                 }
             }
         }
