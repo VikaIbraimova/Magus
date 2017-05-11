@@ -87,12 +87,7 @@ public class Parser {
                                 ) {
 
                             Cell outputCell = outputRow.getCell(outputFileHeadersMap.get(header));
-                            Cell importCell = null;
-                            try {
-                                importCell = importRow.getCell(inputFileHeadersMap.get(header));
-                            } catch (NullPointerException e) {
-                                System.out.println(e);
-                            }
+                            Cell importCell = importRow.getCell(inputFileHeadersMap.get(header));
 
                             if (utils.compareCells(outputCell, importCell)) {
                                 equalCounter++; // нашли совпадение по колонке, следовательно инкрементируем счетчик
