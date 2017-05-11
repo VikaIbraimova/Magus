@@ -161,7 +161,9 @@ public class Utils {
                 result = a.getBooleanCellValue() == b.getBooleanCellValue();
                 break;
             case STRING:
-                result = a.getRichStringCellValue().getString().equals(b.getRichStringCellValue().getString());
+                String x = a.getRichStringCellValue().getString().replaceAll("[\\-\\+\\.\\^:,\\s]", "").toLowerCase();
+                String y = b.getRichStringCellValue().getString().replaceAll("[\\-\\+\\.\\^:,\\s]", "").toLowerCase();
+                result = x.equals(y);
                 break;
             case FORMULA:
                 result = a.getCellFormula().equals(b.getCellFormula());
