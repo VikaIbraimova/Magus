@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import ru.d1g.exceptions.ParseException;
+import ru.d1g.impl.Parser;
 
 import javax.swing.*;
 
@@ -17,7 +18,7 @@ public class Main {
     private static ApplicationContext applicationContext = new ClassPathXmlApplicationContext("spring-config.xml");
     private static Parser parser = applicationContext.getBean(Parser.class);
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         try {
             parser.parse();
         } catch (ParseException exception) {

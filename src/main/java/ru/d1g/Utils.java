@@ -18,7 +18,6 @@ import java.util.*;
  */
 @Component
 public class Utils {
-
     @Value(value = "${import_folder}")
     private String importDirectory;
     @Value(value = "${output_file}")
@@ -119,12 +118,14 @@ public class Utils {
     }
 
     public void saveWorkbook(Workbook workbook, String file) {
-        try (FileOutputStream outputStream = new FileOutputStream(file)) {
-            log.trace("сохраняем файл: {}", file);
-            workbook.write(outputStream);
-        } catch (IOException e) {
-            log.error("не удаётся сохранить книгу {}", file);
-            throw new ParseException("can't save book\n",e);
+        synchronized (outputFile) {
+            try (FileOutputStream outputStream = new FileOutputStream(file)) {
+                log.trace("сохраняем файл: {}", file);
+                workbook.write(outputStream);
+            } catch (IOException e) {
+                log.error("не удаётся сохранить книгу {}", file);
+                throw new ParseException("can't save book\n", e);
+            }
         }
     }
 
