@@ -7,6 +7,8 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 import ru.d1g.exceptions.ParseException;
 
 import javax.swing.*;
+import java.time.Duration;
+import java.time.Instant;
 
 /**
  * Created by A on 03.05.2017.
@@ -19,13 +21,19 @@ public class Main {
 
     public static void main(String[] args) {
         try {
+            Instant start = Instant.now();
+            log.debug("parsing started");
             parser.parse();
+            Instant end = Instant.now();
+            log.debug("parsing time: {}", Duration.between(start,end));
         } catch (ParseException exception) {
             String message = exception.getMessage();
             if (exception.getCause() != null) {
                 message = message + exception.getCause();
             }
             JOptionPane.showMessageDialog(null, "Parse exception:\n" + message);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 }
