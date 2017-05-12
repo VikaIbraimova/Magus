@@ -94,8 +94,8 @@ public class Utils {
                 }
             });
         } catch (IOException e) {
-            log.error("не удается открыть файл",e);
-            throw new ParseException("can't open file\n",e);
+            log.error("не удается открыть файл", e);
+            throw new ParseException("can't open file\n", e);
         }
         return filesStringsList;
     }
@@ -111,10 +111,10 @@ public class Utils {
             return new XSSFWorkbook(is);
         } catch (FileNotFoundException e) {
             log.error("file not found: {}", filepath);
-            throw new ParseException("file not found: "+filepath+"\n",e);
+            throw new ParseException("file not found: " + filepath + "\n", e);
         } catch (IOException e) {
             log.error("IOException for: {}", filepath);
-            throw new ParseException("unexpected IO error while reading file "+filepath+"\n",e);
+            throw new ParseException("unexpected IO error while reading file " + filepath + "\n", e);
         }
     }
 
@@ -124,7 +124,7 @@ public class Utils {
             workbook.write(outputStream);
         } catch (IOException e) {
             log.error("не удаётся сохранить книгу {}", file);
-            throw new ParseException("can't save book\n",e);
+            throw new ParseException("can't save book\n", e);
         }
     }
 
@@ -142,7 +142,16 @@ public class Utils {
     public boolean compareCells(Cell a, Cell b) {
         if (a != null && b != null) {
             if (a.getCellTypeEnum() == b.getCellTypeEnum()) {
-                return (isCellEqual(a, b, a.getCellTypeEnum()));
+                return (isCellEqual(a, b, a.getCellTypeEnum(), false, null));
+            }
+        }
+        return false;
+    }
+
+    public boolean compareCells(Cell a, Cell b, boolean ignoreCase, String regex) {
+        if (a != null && b != null) {
+            if (a.getCellTypeEnum() == b.getCellTypeEnum()) {
+                return (isCellEqual(a, b, a.getCellTypeEnum(), ignoreCase, regex));
             }
         }
         return false;
@@ -151,7 +160,7 @@ public class Utils {
     /*
     * проверка равности ячеек, требуется указать тип ячеек.
     * */
-    private boolean isCellEqual(Cell a, Cell b, CellType cellType) {
+    private boolean isCellEqual(Cell a, Cell b, CellType cellType, boolean ignoreCase, String regex) {
         boolean result = false;
         switch (cellType) {
             case NUMERIC:
@@ -161,9 +170,17 @@ public class Utils {
                 result = a.getBooleanCellValue() == b.getBooleanCellValue();
                 break;
             case STRING:
-                String x = a.getRichStringCellValue().getString().replaceAll("[\\-\\+\\.\\^:,\\s]", "");
-                String y = b.getRichStringCellValue().getString().replaceAll("[\\-\\+\\.\\^:,\\s]", "");
-                result = x.equalsIgnoreCase(y);
+                String x = a.getRichStringCellValue().getString();
+                String y = b.getRichStringCellValue().getString();
+                if (regex != null) {
+                    x = x.replaceAll(regex, "");
+                    y = y.replaceAll(regex, "");
+                }
+                if (ignoreCase) {
+                    result = x.equalsIgnoreCase(y);
+                } else {
+                    result = x.equals(y);
+                }
                 break;
             case FORMULA:
                 result = a.getCellFormula().equals(b.getCellFormula());

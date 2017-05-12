@@ -28,7 +28,8 @@ public class Parser {
     }
 
     public void parse() {
-        CellStyle coloredCellStyle;
+        CellStyle coralCellStyle;
+        CellStyle yellowCellStyle;
         List<String> headers = utils.getHeaders();
 
         List<String> importFiles = utils.getImportedFilesList();
@@ -54,9 +55,13 @@ public class Parser {
                 Row headersRow = importFileSheet.getRow(0); // берем первую строку (должна быть с заголовками)
                 Map<String, Integer> inputFileHeadersMap = utils.getAllRowHeaders(headersRow); // получаем номера стобцов со всеми заголовками входного файла
 
-                coloredCellStyle = importWorkbook.createCellStyle();
-                coloredCellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-                coloredCellStyle.setFillForegroundColor(IndexedColors.CORAL.getIndex());
+                coralCellStyle = importWorkbook.createCellStyle();
+                coralCellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                coralCellStyle.setFillForegroundColor(IndexedColors.CORAL.getIndex());
+
+                yellowCellStyle = importWorkbook.createCellStyle();
+                yellowCellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                yellowCellStyle.setFillForegroundColor(IndexedColors.YELLOW.getIndex());
 
                 if (!utils.checkMapContainsEqualHeaders(inputFileHeadersMap, outputFileHeadersMap)) { // проверим, что все заголовки входного файла так-же присутствуют и в выходном файле
                     log.error("в выходном файле отсутствует заголовок из входного файла {}", filePathString);
@@ -68,6 +73,7 @@ public class Parser {
                             + importFileSheet.getSheetName());
                 }
                 boolean rowFound = false; // состояние, по которому будем определять, что строка не была найдена
+                boolean regexedRowFound = false;
 
                 for (Iterator<Row> importRowIterator = importFileSheet.rowIterator(); importRowIterator.hasNext(); ) {
                     Row importRow = importRowIterator.next();
@@ -76,6 +82,7 @@ public class Parser {
                     }
 
                     rowFound = false; // обнуляем состояние
+                    regexedRowFound = false;
                     for (Iterator<Row> outputRowIterator = outputFileSheet.rowIterator(); outputRowIterator.hasNext(); ) {
                         Row outputRow = outputRowIterator.next();
                         while (outputRow.getRowNum() < outputStartingRow) { // прогоняем итератор до start строки
@@ -83,6 +90,7 @@ public class Parser {
                         }
 
                         int equalCounter = 0;  // заводим счётчик совпавших заголовков
+                        int regexedEqualCounter = 0;
                         for (String header : headers // сравниваем значения нужных заголовков
                                 ) {
 
@@ -92,21 +100,20 @@ public class Parser {
                             if (utils.compareCells(outputCell, importCell)) {
                                 equalCounter++; // нашли совпадение по колонке, следовательно инкрементируем счетчик
                             }
+                            if (utils.compareCells(outputCell, importCell, true, "[\\-\\+\\.\\^:,\\s]")) {
+                                regexedEqualCounter++; // нашли совпадение по колонке, следовательно инкрементируем счетчик
+                            }
                         }
 
                         if (equalCounter == headers.size()) { // если счетчик совпадений равен кол-ву сравниваемых заголовков -> значит мы нашли совпадение строк
                             log.trace("найдено совпадение строк в файлах import: {} output: {}. заполняем данными", importRow.getRowNum(), outputRow.getRowNum());
-                            Row finalImportRow = importRow;
-                            Row finalOutputRow = outputRow;
-                            inputFileHeadersMap.forEach((header, columnNumber) -> { // вот такую жуть ещё делаем :D для каждого заголовка:
-                                Cell outputCell = finalOutputRow.getCell(outputFileHeadersMap.get(header)); // берем ячейку выходного файла для заголовка
-                                if (outputCell == null) { // проверяем, если в выходном файле ячейка отсутствует, то создаём её
-                                    finalOutputRow.createCell(outputFileHeadersMap.get(header));
-                                    outputCell = finalOutputRow.getCell(outputFileHeadersMap.get(header));
-                                }
-                                utils.copyCell(finalImportRow.getCell(columnNumber), outputCell);
-                            });
+                            copyHeadedCells(importRow, outputRow, inputFileHeadersMap, outputFileHeadersMap);
                             rowFound = true; // меняем состояние: найдено соответствие строк
+                        }
+                        if (regexedEqualCounter == headers.size()) {
+                            log.trace("найдено regex совпадение строк в файлах import: {} output: {}. заполняем данными", importRow.getRowNum(), outputRow.getRowNum());
+                            copyHeadedCells(importRow, outputRow, inputFileHeadersMap, outputFileHeadersMap);
+                            regexedRowFound = true; // меняем состояние: найдено соответствие строк
                         }
                     }
 
@@ -114,7 +121,15 @@ public class Parser {
                         log.trace("строка {} файла {} на листе {} не была найдена, красим", importRow.getRowNum(), filePathString, importFileSheet.getSheetName());
                         for (Iterator<Cell> cellIterator = importRow.cellIterator(); cellIterator.hasNext(); ) {
                             Cell cell = cellIterator.next();
-                            cell.setCellStyle(coloredCellStyle);
+                            cell.setCellStyle(yellowCellStyle);
+                        }
+                    }
+
+                    if (!regexedRowFound) {
+                        log.trace("regexed строка {} файла {} на листе {} не была найдена, красим", importRow.getRowNum(), filePathString, importFileSheet.getSheetName());
+                        for (Iterator<Cell> cellIterator = importRow.cellIterator(); cellIterator.hasNext(); ) {
+                            Cell cell = cellIterator.next();
+                            cell.setCellStyle(coralCellStyle);
                         }
                     }
                 }
@@ -122,5 +137,16 @@ public class Parser {
                 utils.saveWorkbook(outputWorkbook, outputFile);
             }
         }
+    }
+
+    private void copyHeadedCells(Row importRow, Row outputRow, Map<String, Integer> inputFileHeadersMap, Map<String, Integer> outputFileHeadersMap) {
+        inputFileHeadersMap.forEach((header, columnNumber) -> { // вот такую жуть ещё делаем :D для каждого заголовка:
+            Cell outputCell = outputRow.getCell(outputFileHeadersMap.get(header)); // берем ячейку выходного файла для заголовка
+            if (outputCell == null) { // проверяем, если в выходном файле ячейка отсутствует, то создаём её
+                outputRow.createCell(outputFileHeadersMap.get(header));
+                outputCell = outputRow.getCell(outputFileHeadersMap.get(header));
+            }
+            utils.copyCell(importRow.getCell(columnNumber), outputCell);
+        });
     }
 }
